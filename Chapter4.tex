@@ -1,0 +1,69 @@
+\chapter{Preliminary Work}
+\thispagestyle{plain}
+
+\label{Chapter4}
+
+This section described our event extraction researches that had been done in the past. In 2015 and 2016, we participated in TAC event nugget detection track. But the 2015 system \cite{satyapanich2015event} had the poor performance. We got better performance from the 2016 systems \cite{satyapanich2016event}. In 2016, we proposed two systems to find the event trigger mentioned in the unstructured text; newswire and discussion forums. Both systems gave the same level of performance. We can adapt these systems to extract the cybersecurity events. The event trigger annotation guidelines and evaluation metrics were described in the first section. Then, the core technology of each system was described followed with their official results.
+
+
+\section{Event Nugget Detection Task Description}
+\label{eventnugget}
+
+For the Event Nugget Detection task \cite{mitamura2016}, we have to detect the event mentioned in the document and classify the event to its type. There are eight event types that are subtyped to eighteen subtypes in Table \ref{table:1}.
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ |c|c|c|c| } 
+ \hline
+ Type & Subtype & Type & Subtype \\
+ \hline
+ Conflict & Attack &  Movement & Transport Artifact \\
+ Conflict & Demonstrate &  Movement & Transport Person \\
+ Contact & Meet & Justice & Arrest Jail \\
+ Contact & Correspondence & Manufacture & Artifact \\
+ Contact & Broadcast & Life & Injure \\
+ Contact & Contact & Life & Die \\
+ Transaction & Transfer Money & Personnel & Start Position \\
+ Transaction & Transaction &  Personnel & End Position \\
+ Transaction & Transfer Ownership & Personnel & Elect \\
+ \hline
+\end{tabular}
+\caption{Event types/subtypes used in TAC 2016}
+\label{table:1}
+\end{center}
+\end{table}
+Nuggets of the eighteen event types have to be identify with mention span and event type if they appeared in the document. Besides, the Realis values are ACTUAL, OTHER, GENERIC has to be chosen for each detected nuggets. 
+The event nugget evaluation scheme evaluate based on the best mapping between the system output and gold standard given the attributes being evaluated. They have 4 metrics: (1) Span only: no attribute are considered other than span. (2) Type: consider the type attribute. (3) Realis: consider the Realis attribute and (4) All: consider all attributes. But we will discuss only the second value “Type” in this report. We built two classification systems called UMBC1 and UMBC2. They have different procedures and features. Both systems are described in the following sections. 
+\section{Our Event Extraction Systems}
+\label{oursystem}
+\subsection{UMBC1: Convolutional Neural Network}
+\label{umbc1}
+The UMBC1 is a sentence-level event extraction system. It consists of two main procedures: Classification and Selection. The classification procedures was developed from Sentence Classification using Convolutional Neural Network \cite{kim2014convolutional}. Convolutional Neural Network was introduced to do sentiment analysis for movie review data. Their system can predict the sentiment of sentence. First, each sentence will be transformed into word matrix. The word matrix was built from concatenation of word embeddings. Then, train the Neural Network with these word matrix to classify the sentiment of the sentence. \\
+\indent In our case, we applied their system to classify a sentence to one of nineteen possible events (18 events plus a non-event). We used the pre-trained word vectors trained on part of Google News dataset (about 100 billion words) called GoogleNews-vectors-negative300.bin.gz \cite{mikolov2013distributed} for any word embeddings task for UMBC1 system. The model contains 300-dimensional vectors for 3 million words and phrases. To train the Convolutional Neural Network, the training data has to be prepared. Each training sample is a sentence annotated with an event type. The preprocessing is as followed. \\
+\indent First, stopwords were filtered out. Then, every sentence in training documents were cut using window of size 10. Each window was overlapped three words within the sentence. If the sentence contains a trigger word, this sentence will be annotated using the annotation event. If the sentence has no trigger, this sentence will be annotated as non-event. The classification model is trained on this collections of processed sentences. When testing, every sentence in the test files were preprocessed with the same step as the training data, before input to the classification model. The sentence will be classify to be either an event or non-event. If it is classified as an event sentence, the sentence will be continued on Selection procedure. \\
+\indent Selection procedure, the sentence will be tokenized. Every single word in the sentence were used to compute a metric. The metric was used to select the final trigger word in the next step. The metric comprised of a similarity value, a probability to be an event $P(Event_i|W)$, a probability to be nonevent $P(Nonevent|W)$. Details of three values are: 
+\begin{itemize}
+    \item The similarity value is the maximum semantic similarity value from word embeddings between the target word and every trigger in the training corpus of that event type. The statistical data of the trigger word that has highest semantic similarity will be used for computing the following probabilities. 
+    \item The probability to be an event of the trigger word $P(Event_i|W)$ is the conditional probability of trigger word is an event given the trigger word. It was computed from number of the trigger word that appeared in the corpus as the trigger word of this event divided by frequency of the trigger word. 
+    \item The probability to be non-event of the trigger word $P(Nonevent|W)$ is the conditional probability of trigger word is not an event given the trigger word. It was computed from number of the trigger word that appeared in the corpus as non-event divided by frequency of the trigger word. Note that all statistical values of trigger words were collected from the training examples. 
+\end{itemize}
+\indent Every single word has a metric that contains three values. Only one word will be select to be the trigger word of the sentence. The word will be selected if the word has highest probability to be an event and the probability to be an event is higher than the probability to be non-event. If the word that has the highest probability to be an event is lower than the probability to be non-event, the second, the third, and so on will be checked until the answer is found.
+
+\subsection{UMBC2: Support Vector Machine}
+\label{umbc2}
+This system is another classification model built from features that extracted from training data. We used Weka \cite{hall2009weka} to train the classification model. This classification model is also built to classify 19 types of events (18 subtypes plus a non-event). Event samples are collected from annotation data in the training corpus. Any words that are appeared in the same sentence but are not the trigger words were collected and annotated as non-event samples. The pre-trained word embeddings from Global Vector for word representation (GloVe), Common Crawl (42B tokens, 1.9M vocab, uncased, 300d vectors) \cite{pennington2014glove} are used for any word embeddings task for UMBC2. Features consist of: 
+\begin{itemize}
+    \item Similarity values: they are computed from distance of word embeddings of representatives of each event type and the target/trigger word. 
+    \item Part of speech tag of the target word 
+    \item Frequencies of each name entity types found in the same sentence. 
+    \item Dependency function of the target word 
+\end{itemize}
+
+Representatives of each event types are set of trigger words from training data. They were selected by K-mean clustering algorithm. We used K equals to 20. The K-mean clustering algorithm is used to cluster all triggers in the corpus. We used similarity value from word embeddings as the distance between each sample in each cluster. The twenty highest frequency trigger words are used as the initial centroids. Finally, we have twenty triggers as representatives per event types. Part of speech tag, name entity detection, and dependency parser were processed using Stanford CoreNLP tool \cite{manning2014stanford}. We ran Auto-WEKA \cite{thornton2013auto} to find the best configurations and best training function. The best training model from our experiment is RandomForest with attribute selection using CfsSubsetEval and Best First Search algorithm. \\
+\indent Testing procedure, every sentence is tokenized into words. Each word was used to compute feature vectors and put into classification model. This method we got the large number of prediction output from the classification model. To reduce the number of output, the low confidence score outputs were filtered out by using threshold 0.5. Threshold is from experiment.
+\subsection{Evaluation and Discussions}
+\label{evalanddiscussumbcs}
+Testing data consists of 169 documents. They are 85 newswire documents and 84 discussion forum threads. We sent two runs for the Event Nugget Detection task. One run was from UMBC1 and another run from UMBC2. The performance of both systems was in the same range. The best result that we got is F1 measure of 31.57 from UMBC2. The system performance showed that UMBC1 can produced higher precision but lower recall when compared to UMBC2. The highest precision we got from UMBC1 is 46.38 for event mention detection. The highest recall is from UMBC2 equals to 30.51. \\
+\indent One problem can be obviously seen that there are imbalanced of train data, development data, and test (Gold) data. Only a few event types has high number of training samples. In the development phase, we tried to train the classification model with balanced training data 200 samples and 500 samples per event types. The training samples were balanced by replicating the small size data and random sampling the big size data. But they performed worse than the model that was trained with imbalanced data. It may due to the sample size was too small. Finally, we chose to not balance training data. This may be a reason that we got low performance. If we can collect more training data, we have balanced big number of samples for each event types, we may get higher performance. In addition to low quality of classification model, small size of some event types in the training data also yielded to the performance of selection procedure of UMBC1. The selection procedure rely on statistical information collected from training data. We have small size of training data, it has high chance that the unseen and dissimilar sample from testing data will be encountered. In this case, the selection procedure will give the wrong output. Another cause of poor performance is because of our development data cannot reflect the system performance in a good way. We observed that development samples of some event types are missing such as Contact.Broadcast, Contact.Contact, Movement.Transport-Artifact. We have no development data in these event types. That means the model is developed in the way that did not concern any performance on these event types. It yielded to these event types has very low performance on test data. The last observation is about characteristics of the discussion forum data. It may not relevant only to the real performance of our system, but it effects the official result of other systems as well. The discussion forum data always has the redundancy phrases or sentences in the same document. If the system detected one of these redundant nuggets, the rest of the redundant nuggets always were annotated with the same event types. If the one was found, the rest will be found. This can exaggerate the performance in both way, much better performance if the nugget was detected or much worse performance if the nugget was neglected. So in our opinion, the discussion forum data is not the good example to measure performance of the event nugget detection system.
+

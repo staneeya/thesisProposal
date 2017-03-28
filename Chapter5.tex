@@ -1,0 +1,39 @@
+\chapter{Evaluation}
+\thispagestyle{plain}
+
+\label{Chapter5}
+
+To evaluate our system, we will compare the system output with the human annotated data. The human annotation data and evaluation metric that will be used are described in the following.
+
+\section{Annotation Data Quality}
+\label{annotation}
+
+We will use students who has strong background in cybersecurity to annotate the data. They will use our annotation guidelines to highlight any events that will be found in text. The selected events will be annotated by their event types along with roles for every participants in the events. Every annotation data need to be verify for their accuracy. We will check the inter-annotator agreement for every detected events. The majority vote will be used for verification. The annotation event will be kept in the corpus if they got majority vote among annotators.\\
+\indent Moreover, we can report the quality of our annotation corpus using F-measure follows \cite{mitamura2015event}. By selecting an evaluation set and assume one of the data set to be gold standard and another set is the test data. Then checked the overlap of their mention span using F-measure. The F-measure is explained later in this chapter. 
+
+\section{Event Extraction System Performance}
+We will evaluate our system performance in event mention detection using the standard measurement F1 value. The test data are unseen data that will be in the same format as the train data. The human-annotated of this test data is the gold standard that will be used to compare their mention span to measure the accuracy. We will measure the system performance in many aspects; event mention detection, roles/participants detection. Besides, we will also analyze system performance by their data sources and their event types.
+
+
+\section{Evaluation Metric}
+\label{evalmetric}
+
+ F1-measure considers both the precision (P) and the recall (R) of the prediction output to compute the score. Precision is the number of correct positive results divided by the number of all positive results. Recall is the number of correct positive results divided by the number of positive results that should have been returned. The F1 score best value is at 1 and worst is at 0. Correct result means the output is the same as the gold standard.
+F1 can be computed from equation \ref{eq1}.
+\begin{equation}
+\label{eq1}
+    F_1=\frac {2 * Precision * Recall}{Precision+Recall}
+\end{equation}
+
+whereas precision can be computed from equation \ref{eq2}. And recall can be computed from equation \ref{eq3}.
+\begin{equation}
+\label{eq2}
+Precision = \frac{True positive}{True positive+False positive}
+\end{equation}
+\begin{equation}
+\label{eq3}
+Recall =\frac{True positive}{True positive+False negative}
+\end{equation}		
+\\
+Which in our case, true positive are the number of output that the system correctly predicted, false positive are the number of the incorrect answer that the system predicted, and false negative means the number of the correct answer that are not in the system output.
+
